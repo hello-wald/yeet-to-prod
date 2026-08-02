@@ -1,0 +1,10 @@
+# local env — never commit real values
+.env
+
+# compiled binaries
+app
+main
+/yeet-to-prod
+
+# go test/coverage output
+*.out

@@ -1,0 +1,12 @@
+# deps
+node_modules/
+
+# build output
+dist/
+
+# local env — never commit real values
+.env
+.env.local
+
+# logs
+npm-debug.log*

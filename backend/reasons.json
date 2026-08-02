@@ -1,0 +1,62 @@
+{
+  "ok": {
+    "reason": "all clear",
+    "messages": [
+      "Do. Or do not. There is no try. — ship it.",
+      "It's dangerous to go alone. Take this green build and deploy.",
+      "The cake is not a lie. Pipeline's green — go.",
+      "A winner is you. Yeet to prod.",
+      "What a time to be alive. Deploy away."
+    ]
+  },
+  "night": {
+    "reason": "it's night",
+    "messages": [
+      "It's dangerous to go alone at 3 AM. Go to bed.",
+      "Winter is coming. So is your on-call page. Sleep.",
+      "You shall not pass... this commit at 3 AM.",
+      "Good night, sweet prince. Not tonight.",
+      "Nobody's awake to catch you. Rest, hero."
+    ]
+  },
+  "today_weekend": {
+    "reason": "it's the weekend",
+    "messages": [
+      "Why so serious? It's Saturday. Step away.",
+      "Life moves pretty fast. It's the weekend — go touch grass.",
+      "The first rule of weekend club: you do not deploy.",
+      "You were the chosen one — to rest, not to deploy.",
+      "What do we say to a weekend deploy? Not today."
+    ]
+  },
+  "tomorrow_weekend": {
+    "reason": "tomorrow is the weekend",
+    "messages": [
+      "One does not simply deploy on a Friday.",
+      "Houston, we have a Friday deploy.",
+      "It's a trap! Friday deploy, weekend incident.",
+      "I have a bad feeling about this Friday push.",
+      "Say hello to my little rollback. Not on a Friday."
+    ]
+  },
+  "today_holiday": {
+    "reason": "today is a holiday",
+    "messages": [
+      "You shall not deploy on a holiday.",
+      "Frankly, my dear, it's a holiday. Don't.",
+      "Live long and prosper. Deploy some other day.",
+      "It's a holiday. Even the cake gets a day off.",
+      "What do we say to a holiday deploy? Not today."
+    ]
+  },
+  "tomorrow_holiday": {
+    "reason": "tomorrow is a holiday",
+    "messages": [
+      "Holiday's coming. Don't light the fuse tonight.",
+      "I'll be back... after the holiday. Don't deploy.",
+      "Houston, there's a holiday tomorrow.",
+      "A deploy right before a holiday? What could go wrong. Everything.",
+      "It's a trap. Ship after the holiday."
+    ]
+  }
+}
