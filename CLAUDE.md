@@ -1,22 +1,25 @@
 # CLAUDE.md — yeet-to-prod
 
-Teaching demo for the COMPFEST 18 CI/CD session. Small on purpose. Full domain design +
-glossary lives in `../CONTEXT.md` — read it before changing behavior.
+Small, self-contained app. Read this before changing behavior — the domain rules and
+architecture invariants below are the whole spec.
 
 ## What it is
-Full-screen app answering "should I yeet to prod right now?" — green YES / red NO with a
-meme/movie-quote line, plus a live clock in the chosen country's timezone. Meta-joke on
-"don't deploy on Friday." (Brand = yeet-to-prod; API endpoint stays `/should-i-deploy`.)
+Full-screen app answering "should I deploy right now?" — green YES / red NO with a
+meme/movie-quote line, plus a live clock in the chosen country's timezone. A play on
+"don't deploy on Friday." (API endpoint is `/should-i-deploy`.)
 
 - `backend/` — Go API, one endpoint, **stdlib only** (no external deps — keeps `go test` /
-  `go build` offline + the dependency story clean).
+  `go build` offline and the build reproducible).
 - `frontend/` — Vite React, full-screen color + message + live country clock.
 
 ## Core rule (Safe to Deploy)
-`true` only when ALL hold: **not night**, today **not weekend**, tomorrow **not weekend**,
-today **not holiday**, tomorrow **not holiday**. Else `false`.
+`safe = true` only when ALL hold, evaluated in the country's timezone:
+**not night**, today **not weekend**, tomorrow **not weekend**, today **not holiday**,
+tomorrow **not holiday**. Else `false`. (Rationale: never deploy when nobody's around to
+fix a break.)
 
-Supported countries: `ID`, `IN`, `CN`, `US`, `AE` (Dubai/UAE), `JP`. All in `config.json`.
+- **Night** = local time outside `work_hours` (before `start` or at/after `end`).
+- Supported countries: `ID`, `IN`, `CN`, `US`, `AE` (Dubai/UAE), `JP` — all in `config.json`.
 
 ## Architecture invariants — keep these
 - **`decide(now, cfg)` is PURE.** Time is **injected** (never `time.Now()` inside) so tests
@@ -31,11 +34,11 @@ Supported countries: `ID`, `IN`, `CN`, `US`, `AE` (Dubai/UAE), `JP`. All in `con
 - **Randomness isolated** in the message picker (injected `*rand.Rand`), not in `decide`.
 - **HTTP handler lives in `server.go`** (`server` type), split from `main.go` wiring so it's
   testable with `httptest`. `main.go` only loads config + env and starts the listener.
-- `import _ "time/tzdata"` in `main.go` bundles tz data so `LoadLocation` works on CI/Render.
+- `import _ "time/tzdata"` in `main.go` bundles tz data so `LoadLocation` works everywhere.
 
 ## Config (all via env / `.env`, see `.env.example`)
 Backend: `PORT`, `ALLOWED_ORIGIN`, `CONFIG_PATH`, `MESSAGES_PATH`, `DEFAULT_COUNTRY`,
-`RATE_LIMIT_PER_MINUTE`, `NOW_OVERRIDE` (fake clock, RFC3339, demo only).
+`RATE_LIMIT_PER_MINUTE`, `NOW_OVERRIDE` (fake clock, RFC3339).
 Frontend: `VITE_API_URL`, `VITE_DEFAULT_COUNTRY`.
 
 ## API
@@ -45,14 +48,8 @@ live clock (`formatClock` in `frontend/src/logic.js`).
 
 ## Security (honest)
 CORS = browser hygiene only, not real auth (curl bypasses). In-memory rate limit =
-single-instance only (resets on restart, not shared across replicas). Fine for a demo;
-say so out loud — it's a teaching point.
+single-instance only (resets on restart, not shared across replicas).
 
 ## Run
 See `README.md`. Backend: `go test ./... && go run .`. Frontend: `npm install && npm run
 dev`. Lint: `npm run lint`. Tests: `go test ./...`, `npm test`.
-
-## The two on-stage breaks (don't "fix" these — they're the lesson)
-1. Invert a weekend check in `decide.go` → backend test red → teaches `deploy needs: test`.
-2. Delete `frontend/package-lock.json` → `npm ci` red → teaches dependency management.
-See `README.md` for exact steps.

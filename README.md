@@ -1,17 +1,17 @@
 # yeet-to-prod
 
-Fun demo for the COMPFEST 18 CI/CD session. A full-screen app that tells you whether it's
-safe to deploy right now — should you yeet to prod, or not? Meta-joke on the "don't deploy
-on Friday" rule. (API endpoint stays `/should-i-deploy`.)
+A full-screen app that gives a brutally honest answer to: **should you deploy right now?**
+Green YES / red NO with a meme/movie-quote line, plus a live clock in the chosen country's
+timezone. A play on the "don't deploy on Friday" rule. (API endpoint is `/should-i-deploy`.)
 
-- **backend/** — Go API, one endpoint, pure `decide()` + table tests, stdlib only.
-- **frontend/** — Vite React, full-screen green/red + funny line.
+- **backend/** — Go API, one endpoint, pure `decide()` + full test suite, stdlib only.
+- **frontend/** — Vite React, full-screen green/red verdict + live country clock.
 
 Rule (**Safe to Deploy**): YES only when it's **not night**, and **today + tomorrow** are
 neither **weekend** nor **holiday** (per country). Anything else → NO.
 
-Countries, holidays, work hours, weekend days → `backend/config.json`.
-Funny messages (randomized) → `backend/reasons.json`. Add/remove = edit JSON.
+Countries, holidays, work hours, weekend days → `backend/config.json` (`ID/IN/CN/US/AE/JP`).
+Messages (randomized) → `backend/reasons.json`. Add/remove = edit JSON.
 
 ---
 
@@ -21,7 +21,7 @@ Funny messages (randomized) → `backend/reasons.json`. Add/remove = edit JSON.
 ```bash
 cd backend
 cp .env.example .env          # optional; defaults work
-go test ./...                 # run the tests CI will run
+go test ./...                 # run the full test suite
 go run .                      # serves http://localhost:8080
 ```
 Try it:
@@ -42,7 +42,7 @@ npm run dev                   # http://localhost:5173
 
 ---
 
-## Fake the clock (demo without waiting)
+## Fake the clock (test any day/time)
 
 Backend `.env`:
 ```
@@ -52,21 +52,14 @@ Empty = real time.
 
 ---
 
-## The two on-stage breaks (for the CI/CD lesson)
+## API
 
-**1. Logic break (backend test goes red).** In `backend/decide.go`, invert a weekend check:
-```go
-// green:
-if isWeekend(tomorrow.Weekday(), cfg.WeekendDays) {
-// broken — flip the condition:
-if !isWeekend(tomorrow.Weekday(), cfg.WeekendDays) {
-```
-Now the tool says "deploy on Saturday." `go test ./...` fails on
-`tomorrow weekend blocks`. Revert → green. Teaches: `deploy needs: test`.
+`GET /should-i-deploy?country=ID` → `{ country, timezone, safe, reason, message }`
+- `400` unknown country · `429` rate-limited · `GET /healthz` → `ok`
 
-**2. Dependency break (frontend `npm ci` goes red).** Delete `frontend/package-lock.json`
-and commit. On CI, `npm ci` fails ("works on my machine"). Commit the lockfile → green.
-Teaches: dependency management, reproducible builds.
+**Note on access control:** CORS restricts *browsers* to the configured origin but does not
+stop `curl`/Postman — it's hygiene, not auth. The in-memory rate limit is per-instance
+(resets on restart, not shared across replicas). Both are fine for a small public app.
 
 ---
 
@@ -74,5 +67,5 @@ Teaches: dependency management, reproducible builds.
 
 - **frontend/** → Vercel · Root Directory = `frontend/` · set `VITE_API_URL` to the backend URL.
 - **backend/** → Render (web service) · Root Directory = `backend/` · build `go build -o app .`,
-  start `./app`. Set `ALLOWED_ORIGIN` to the Vercel URL. Pre-warm before demo (free instance
-  cold-starts after 15 min idle).
+  start `./app`. Set `ALLOWED_ORIGIN` to the frontend URL. Free instances cold-start after
+  ~15 min idle.
