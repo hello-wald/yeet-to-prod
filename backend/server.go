@@ -63,23 +63,41 @@ func (s *server) handleDeploy(w http.ResponseWriter, r *http.Request) {
 }
 
 // router wires routes and wraps them in CORS.
-func (s *server) router(allowedOrigin string) http.Handler {
+func (s *server) router(allowedOrigins []string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/should-i-deploy", s.handleDeploy)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
-	return cors(allowedOrigin, mux)
+	return cors(allowedOrigins, mux)
 }
 
-// cors restricts browser callers to allowedOrigin. Browser-enforced only — does
-// not stop curl/Postman. Hygiene, not real auth.
-func cors(origin string, next http.Handler) http.Handler {
+// cors allows browser callers whose Origin is in the allowlist. A response can
+// only name ONE origin, so we echo back the request's Origin when it matches
+// (that's how multiple allowed origins work). "*" allows any. Browser-enforced
+// only — does not stop curl/Postman. Hygiene, not real auth.
+func cors(allowed []string, next http.Handler) http.Handler {
+	allowSet := make(map[string]bool, len(allowed))
+	wildcard := false
+	for _, o := range allowed {
+		if o == "*" {
+			wildcard = true
+		}
+		allowSet[o] = true
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", origin)
+		origin := r.Header.Get("Origin")
+		switch {
+		case wildcard:
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		case origin != "" && allowSet[origin]:
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Add("Vary", "Origin")
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Vary", "Origin")
+
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

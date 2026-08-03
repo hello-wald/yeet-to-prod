@@ -11,9 +11,9 @@ import (
 
 func testMessages() Messages {
 	return Messages{
-		CodeOK:            {Reason: "all clear", Messages: []string{"YES go"}},
-		CodeTodayWeekend:  {Reason: "it's the weekend", Messages: []string{"NO weekend"}},
-		CodeNight:         {Reason: "it's night", Messages: []string{"NO night"}},
+		CodeOK:           {Reason: "all clear", Messages: []string{"YES go"}},
+		CodeTodayWeekend: {Reason: "it's the weekend", Messages: []string{"NO weekend"}},
+		CodeNight:        {Reason: "it's night", Messages: []string{"NO night"}},
 	}
 }
 
@@ -33,7 +33,16 @@ func newTestServer(nowOverride string, maxPerMin int) *server {
 func do(s *server, method, target string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, target, nil)
 	rec := httptest.NewRecorder()
-	s.router("http://localhost:5173").ServeHTTP(rec, req)
+	s.router([]string{"http://localhost:5173"}).ServeHTTP(rec, req)
+	return rec
+}
+
+// doOrigin sends a request with an Origin header against a given allowlist.
+func doOrigin(s *server, target, origin string, allowed []string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest("GET", target, nil)
+	req.Header.Set("Origin", origin)
+	rec := httptest.NewRecorder()
+	s.router(allowed).ServeHTTP(rec, req)
 	return rec
 }
 
@@ -97,11 +106,30 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestCORS(t *testing.T) {
-	rec := do(newTestServer("2026-08-12T10:00:00+07:00", 100), "GET", "/should-i-deploy?country=ID")
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
-		t.Errorf("CORS origin = %q, want http://localhost:5173", got)
+	s := newTestServer("2026-08-12T10:00:00+07:00", 100)
+	allow := []string{"http://localhost:5173", "https://yeet.example.com"}
+
+	// each allowed origin is echoed back (that's how a multi-origin allowlist works)
+	for _, o := range allow {
+		rec := doOrigin(s, "/should-i-deploy?country=ID", o, allow)
+		if got := rec.Header().Get("Access-Control-Allow-Origin"); got != o {
+			t.Errorf("origin %q: ACAO = %q, want it echoed", o, got)
+		}
 	}
 
+	// disallowed origin → no ACAO header at all
+	rec := doOrigin(s, "/should-i-deploy?country=ID", "https://evil.example.com", allow)
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Errorf("disallowed origin got ACAO %q, want empty", got)
+	}
+
+	// "*" allows any origin
+	star := doOrigin(s, "/should-i-deploy?country=ID", "https://anything.example.com", []string{"*"})
+	if got := star.Header().Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("wildcard ACAO = %q, want *", got)
+	}
+
+	// preflight OPTIONS → 204
 	pre := do(newTestServer("", 100), "OPTIONS", "/should-i-deploy")
 	if pre.Code != http.StatusNoContent {
 		t.Errorf("preflight status = %d, want 204", pre.Code)

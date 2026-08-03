@@ -37,8 +37,9 @@ fix a break.)
 - `import _ "time/tzdata"` in `main.go` bundles tz data so `LoadLocation` works everywhere.
 
 ## Config (all via env / `.env`, see `.env.example`)
-Backend: `PORT`, `ALLOWED_ORIGIN`, `CONFIG_PATH`, `MESSAGES_PATH`, `DEFAULT_COUNTRY`,
-`RATE_LIMIT_PER_MINUTE`, `NOW_OVERRIDE` (fake clock, RFC3339).
+Backend: `PORT`, `ALLOWED_ORIGIN` (comma-separated list, or `*`), `CONFIG_PATH`,
+`MESSAGES_PATH`, `DEFAULT_COUNTRY`, `RATE_LIMIT_PER_MINUTE`, `NOW_OVERRIDE` (fake clock,
+RFC3339).
 Frontend: `VITE_API_URL`, `VITE_DEFAULT_COUNTRY`.
 
 ## API
@@ -47,8 +48,10 @@ unknown country; `429` rate-limited. `GET /healthz` → `ok`. `timezone` drives 
 live clock (`formatClock` in `frontend/src/logic.js`).
 
 ## Security (honest)
-CORS = browser hygiene only, not real auth (curl bypasses). In-memory rate limit =
-single-instance only (resets on restart, not shared across replicas).
+CORS = browser hygiene only, not real auth (curl bypasses). `ALLOWED_ORIGIN` is a
+comma-separated allowlist; the middleware echoes the request Origin when it matches (a
+response can only name one origin), or sends `*` if the list contains `*`. In-memory rate
+limit = single-instance only (resets on restart, not shared across replicas).
 
 ## Run
 See `README.md`. Backend: `go test ./... && go run .`. Frontend: `npm install && npm run

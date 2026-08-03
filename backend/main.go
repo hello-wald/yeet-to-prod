@@ -13,7 +13,7 @@ func main() {
 	loadDotenv(".env")
 
 	port := env("PORT", "8080")
-	allowedOrigin := env("ALLOWED_ORIGIN", "http://localhost:5173")
+	allowedOrigins := envList("ALLOWED_ORIGIN", "http://localhost:5173") // comma-separated
 	configPath := env("CONFIG_PATH", "config.json")
 	messagesPath := env("MESSAGES_PATH", "reasons.json")
 	defaultCountry := env("DEFAULT_COUNTRY", "ID")
@@ -38,6 +38,6 @@ func main() {
 		nowOverride:    nowOverride,
 	}
 
-	log.Printf("listening on :%s (allowed origin %s)", port, allowedOrigin)
-	log.Fatal(http.ListenAndServe(":"+port, s.router(allowedOrigin)))
+	log.Printf("listening on :%s (allowed origins %v)", port, allowedOrigins)
+	log.Fatal(http.ListenAndServe(":"+port, s.router(allowedOrigins)))
 }

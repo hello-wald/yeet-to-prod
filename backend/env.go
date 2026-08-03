@@ -41,6 +41,18 @@ func env(key, def string) string {
 	return def
 }
 
+// envList reads a comma-separated env var into a trimmed, non-empty slice.
+func envList(key, def string) []string {
+	parts := strings.Split(env(key, def), ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
 func envInt(key string, def int) int {
 	if v, ok := os.LookupEnv(key); ok {
 		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {

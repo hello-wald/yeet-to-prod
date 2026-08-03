@@ -57,9 +57,10 @@ Empty = real time.
 `GET /should-i-deploy?country=ID` → `{ country, timezone, safe, reason, message }`
 - `400` unknown country · `429` rate-limited · `GET /healthz` → `ok`
 
-**Note on access control:** CORS restricts *browsers* to the configured origin but does not
-stop `curl`/Postman — it's hygiene, not auth. The in-memory rate limit is per-instance
-(resets on restart, not shared across replicas). Both are fine for a small public app.
+**Note on access control:** CORS restricts *browsers* to the origins in `ALLOWED_ORIGIN`
+(comma-separated list, or `*`) but does not stop `curl`/Postman — it's hygiene, not auth.
+The in-memory rate limit is per-instance (resets on restart, not shared across replicas).
+Both are fine for a small public app.
 
 ---
 
