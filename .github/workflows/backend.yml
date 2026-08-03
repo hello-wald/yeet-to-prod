@@ -6,6 +6,10 @@ on:
       - "backend/**"
       - ".github/workflows/backend.yml"
   workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA to test + deploy (blank = branch tip)"
+        required: false
 
 permissions:
   contents: read
@@ -23,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
@@ -30,13 +36,11 @@ jobs:
       - run: go vet ./...
       - run: go test ./...
 
-  # Deploy — manual only (Actions → Run workflow), gated behind test. This makes
-  # backend deploy a human decision = Continuous Delivery (vs the frontend's auto
-  # Continuous Deployment). Pins Render to the dispatched commit.
   deploy:
     needs: test
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy
-        run: curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK }}&ref=${{ github.sha }}"
+        working-directory: ${{ github.workspace }}
+        run: curl -fsS "${{ secrets.RENDER_DEPLOY_HOOK }}&ref=${{ inputs.sha || github.sha }}"
