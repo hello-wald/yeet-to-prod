@@ -56,3 +56,12 @@ limit = single-instance only (resets on restart, not shared across replicas).
 ## Run
 See `README.md`. Backend: `go test ./... && go run .`. Frontend: `npm install && npm run
 dev`. Lint: `npm run lint`. Tests: `go test ./...`, `npm test`.
+
+## Frontend deploy (GitHub Pages)
+`.github/workflows/pages.yml`: push to any branch touching `frontend/**` → lint + test;
+`main` → build + deploy to Pages (`deploy` needs `build` needs `test`). Build-time vars
+`VITE_API_URL` and `VITE_DEFAULT_COUNTRY` come from repo **Variables** (Settings →
+Variables), injected as env — never committed. Vite `base` = `/yeet-to-prod/` on `build`
+only (dev stays `/`). One-time: set Pages Source = "GitHub Actions" + add the
+`VITE_API_URL` and `VITE_DEFAULT_COUNTRY` Variables. Backend deploys separately (Render);
+its `ALLOWED_ORIGIN` must include `https://qornanali.github.io`.

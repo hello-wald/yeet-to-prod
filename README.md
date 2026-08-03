@@ -66,7 +66,20 @@ Both are fine for a small public app.
 
 ## Deploy (free tier)
 
-- **frontend/** → Vercel · Root Directory = `frontend/` · set `VITE_API_URL` to the backend URL.
-- **backend/** → Render (web service) · Root Directory = `backend/` · build `go build -o app .`,
-  start `./app`. Set `ALLOWED_ORIGIN` to the frontend URL. Free instances cold-start after
-  ~15 min idle.
+### Frontend → GitHub Pages (automated)
+`.github/workflows/pages.yml`: every branch push touching `frontend/**` runs lint + test;
+`main` also builds and deploys to Pages. `deploy` needs `build` needs `test`.
+
+**One-time setup:**
+1. Repo **Settings → Pages → Source = "GitHub Actions"**.
+2. Repo **Settings → Secrets and variables → Actions → Variables** → add
+   `VITE_API_URL = https://<backend-url>` (a Variable, not a Secret — public URL). The
+   workflow injects it at build; nothing is committed.
+3. Site URL: `https://qornanali.github.io/yeet-to-prod/` (Vite `base` is set to match).
+
+Notes: Pages is HTTPS-only → backend must be HTTPS. Add the Pages origin
+`https://qornanali.github.io` to the backend `ALLOWED_ORIGIN`.
+
+### Backend → Render (web service)
+Root Directory = `backend/` · build `go build -o app .` · start `./app`. Set
+`ALLOWED_ORIGIN` to include the Pages origin. Free instances cold-start after ~15 min idle.
