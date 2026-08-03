@@ -87,11 +87,23 @@ browser loads the frontend from Pages, and the frontend calls the backend on Ren
 
 Pick one:
 
-**Option A — Fork the demo (recommended for practice).** Browser → the demo repo →
-**Fork** (top-right) → creates `https://github.com/<your-user>/yeet-to-prod`. You now have
-your own copy to deploy.
+**Option A — Fork + start from the `starter` branch (recommended for practice).** Browser →
+the demo repo → **Fork** (top-right) → creates `https://github.com/<your-user>/yeet-to-prod`.
 
-Two things after forking:
+The repo has two relevant branches:
+- **`main`** — the **finished** result (workflows already added). Read it to compare answers.
+- **`starter`** — the app **without** any CI/CD. This is where you follow along.
+
+So after forking, switch to `starter`:
+```bash
+git clone https://github.com/<your-user>/yeet-to-prod
+cd yeet-to-prod
+git checkout starter        # the pre-CI starting point
+```
+> If you follow the guide on `main`, the workflows already exist — there's nothing to add.
+> Always follow along on **`starter`**.
+
+Two more things after forking:
 1. **Enable Actions.** Forks have workflows **disabled** by default. Go to your fork →
    **Actions** tab → click **"I understand my workflows, go ahead and enable them"**.
    Nothing runs until you do this.
