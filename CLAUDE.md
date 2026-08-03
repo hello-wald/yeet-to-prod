@@ -65,3 +65,11 @@ Variables), injected as env — never committed. Vite `base` = `/yeet-to-prod/` 
 only (dev stays `/`). One-time: set Pages Source = "GitHub Actions" + add the
 `VITE_API_URL` and `VITE_DEFAULT_COUNTRY` Variables. Backend deploys separately (Render);
 its `ALLOWED_ORIGIN` must include `https://qornanali.github.io`.
+
+## Backend deploy (Render)
+`.github/workflows/backend.yml`: push to any branch touching `backend/**` → `go vet` +
+`go test`. Deploy is **manual only** (`workflow_dispatch` from `main`, `needs: test`) — a
+human decision = Continuous Delivery (contrast: frontend Pages = auto = Continuous
+Deployment). Deploy = `curl` of the Render **Deploy Hook** with `&ref=<github.sha>` so
+Render builds the exact dispatched commit. Hook URL is a repo **Secret**
+`RENDER_DEPLOY_HOOK`. Render Auto-Deploy must be OFF so this is the only deploy path.

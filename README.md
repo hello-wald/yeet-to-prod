@@ -80,6 +80,18 @@ Both are fine for a small public app.
 Notes: Pages is HTTPS-only → backend must be HTTPS. Add the Pages origin
 `https://qornanali.github.io` to the backend `ALLOWED_ORIGIN`.
 
-### Backend → Render (web service)
-Root Directory = `backend/` · build `go build -o app .` · start `./app`. Set
-`ALLOWED_ORIGIN` to include the Pages origin. Free instances cold-start after ~15 min idle.
+### Backend → Render (automated, gated by CI)
+`.github/workflows/backend.yml`: every branch push touching `backend/**` runs `go vet` +
+`go test`. Deploy is **manual** — Actions → Run workflow (from `main`) → after tests pass,
+triggers a Render deploy **pinned to that commit** (`<deploy-hook>&ref=<sha>`). `deploy`
+needs `test`. (Manual = Continuous Delivery; the frontend Pages pipeline is auto =
+Continuous Deployment.)
+
+**One-time setup:**
+1. Render service · Root Directory = `backend/` · build `go build -o app .` · start `./app`.
+2. Set `ALLOWED_ORIGIN` on Render to include `https://qornanali.github.io`.
+3. Render → Settings → **disable Auto-Deploy** (so CI is the only path → the gate is real).
+4. Render → Settings → **Deploy Hook** → copy URL → add as GitHub **Secret**
+   `RENDER_DEPLOY_HOOK` (Secret, not Variable — it triggers prod deploys).
+
+Free instances cold-start after ~15 min idle.
