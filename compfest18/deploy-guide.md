@@ -120,20 +120,37 @@ just swap every `yeet-to-prod` value for yours (that's what **`← replace with 
 
 ## 3. Part A — Frontend → GitHub Pages
 
-### A1. Set the base path (one line of code)
+### A1. Set the base path + test environment (`frontend/vite.config.js`)
 
 GitHub Pages serves a project site under a subpath: `https://<user>.github.io/<repo>/`.
-Vite must know this or the CSS/JS will 404. Edit `frontend/vite.config.js`:
+Vite must know this or the CSS/JS will 404. The same file also configures Vitest — the
+component tests render React into a DOM, and Vitest's default environment is `node`, which
+has no `document`. Edit `frontend/vite.config.js`:
 
 ```js
 export default defineConfig(({ command }) => ({
   base: command === "build" ? "/yeet-to-prod/" : "/",   // ← replace yeet-to-prod with YOUR repo name
   plugins: [react()],
+  test: {
+    environment: "jsdom",   // component tests need a fake browser DOM
+  },
 }));
 ```
 
 Why the `command ===` check: local `dev` stays at `/` (simple URLs); only the production
 `build` gets the `/repo/` subpath.
+
+Why `environment: "jsdom"`: `jsdom` is a browser-like DOM implemented in JavaScript. Without
+it, `npm test` fails on `render(<App />)` with `ReferenceError: document is not defined`, and
+since `pages.yml` runs `npm test` before building, **the whole deploy stops**. `jsdom` is
+already in `devDependencies` — only this config line is missing.
+
+Verify before you push:
+```bash
+cd frontend
+npm install
+npm test        # all tests must pass
+```
 
 ### A2. Add the workflow file
 
@@ -426,6 +443,24 @@ jobs:
 ---
 
 ## 7. Troubleshooting (real errors)
+
+**`npm test` fails: `ReferenceError: document is not defined` (the `test` job goes red, so
+nothing deploys)**
+```
+FAIL  src/App.test.jsx > App > shows backend message + green bg when safe
+ReferenceError: document is not defined
+ ❯ Proxy.render node_modules/@testing-library/react/dist/pure.js:256:5
+```
+→ Vitest ran in its default `node` environment, which has no DOM. Add the `test` block from
+[step A1](#a1-set-the-base-path--test-environment-frontendviteconfigjs) to
+`frontend/vite.config.js`:
+```js
+test: {
+  environment: "jsdom",
+},
+```
+Pure-logic tests (`logic.test.js`) still pass — only the ones calling `render()` fail, which
+is the tell.
 
 **Frontend loads but is unstyled / blank, console shows 404 on `/assets/...`**
 → `base` in `vite.config.js` doesn't match your repo name. It must be `/<repo>/` for a
